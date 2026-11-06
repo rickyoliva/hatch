@@ -96,6 +96,6 @@ One ADR per structural decision. Append-only; supersede rather than rewrite.
 ## ADR-015 — GameShare is a reserve, not a purchase trigger
 
 **Status:** accepted.
-**Context:** PC-hosted GameShare is the only no-content, host-driven surface on a stock 23.0.1 console, but it needs a Switch 2, a compatible title and an injecting radio. No public work exists.
-**Decision:** add `06-dossiers/gameshare.md`, keep the track reserve, and borrow a Switch 2 before buying one. Start only if a tier-A track dies or a no-cartridge delivery story is needed. G1 (room replay from a PC) is the only gate worth funding until it passes.
-**Consequence:** no new budget line; G0/G1 are the whole feasibility question.
+**Context:** GameShare is the only no-content, host-driven surface on a stock 23.0.1 console. Switch 1 23.0.1 already contains `NGC_services` and `splay`, so the host role can be proved on the v1; a PC is only the eventual removal of both consoles. No public work exists.
+**Decision:** add `06-dossiers/gameshare.md` and `11-gameshare-host-bringup.md`. Start at A0, do not buy a Switch 2, and borrow one only if A3 (guest `splay` launch) fails. A3 is the gate worth funding until it passes.
+**Consequence:** no new budget line; A0/A1 are static and cheap, A3 is the whole feasibility question.

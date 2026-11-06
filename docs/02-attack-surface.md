@@ -35,8 +35,8 @@ Each vector is scored 1–5 and multiplied. The composite is a *sort key*, not a
 | 13 | `ldn` local wireless + game netcode | 3 | 3 | 5 | 4 | 5 | 2 | 3 | **5400** |
 | 14 | Library applets (`swkbd`, `myPage`, `controllerSupport`) | 2 | 2 | 5 | 4 | 5 | 3 | 4 | **4800** |
 | 15 | `hid` Joy-Con over Bluetooth | 3 | 4 | 5 | 2 | 5 | 3 | 2 | **3600** |
-| 16 | Raw save transplant | 4 | 3 | 2 | 4 | 2 | 4 | 1 | **1536** |
-| 17 | GameShare / `splay` guest (PC-hosted) | 2 | 2 | 3 | 4 | 5 | 1 | 2 | **480** |
+| 16 | GameShare / `splay` guest (v1-hosted) | 2 | 2 | 5 | 4 | 5 | 2 | 2 | **1600** |
+| 17 | Raw save transplant | 4 | 3 | 2 | 4 | 2 | 4 | 1 | **1536** |
 
 ## Tier assignments
 
@@ -53,7 +53,7 @@ Each vector is scored 1–5 and multiplied. The composite is a *sort key*, not a
 
 **Reserve — WebKit.** Ranked ninth on chain contribution and first on density. It is the *best complement* to any kernel bug, because then its low privilege stops mattering and the chain completes instantly. Keep a WebKit track warm, and if a kernel bug lands first, WebKit becomes tier A overnight.
 
-**Reserve — GameShare.** The only no-content, host-driven entry: no cartridge, no save install, no user navigation, and the attacker owns the host. Low privilege and high verification cost, but a PC impersonating the host would remove the Switch 2 from the loop and turn a social feature into an offline fuzz target. Keep cold until a no-cartridge delivery story is needed. See `06-dossiers/gameshare.md`.
+**Reserve — GameShare.** The only no-content, host-driven entry: no cartridge, no save install, no user navigation, and the attacker owns the host. The v1 can host it — 23.0.1 carries `NGC_services` and `splay` — so the first phase needs no Switch 2. A PC later removes both consoles. Score assumes the v1 host; it falls if a Switch 2 turns out to be required. Low privilege, but a social-friction delivery channel with an un-fuzzed parser behind it. See `06-dossiers/gameshare.md` and `11-gameshare-host-bringup.md`.
 
 ## Why WebKit drops from first to ninth
 

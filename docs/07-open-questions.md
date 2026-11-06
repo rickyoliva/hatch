@@ -35,7 +35,10 @@ Facts we must establish before committing build time. Each has an owner action a
 | Q29 | Does `GetRequiredMemorySize` trust a host-supplied guest count above three? | Host-side stub mutation at G3 | H-GS4 |
 | Q30 | Which `stpl:sys` commands are reachable before a session exists? | Static call table plus G1 | G1/G2 ordering |
 | Q31 | Is the Switch 1 guest a compatibility subset of the Switch 2 protocol? | Diff `splay` vs `SplayApplet` service and command use | Whether a Switch 1-only host is possible |
-| Q32 | Can a PC complete the LDN join with AP-mode-only injection? | Rerun the TX10LED path on a known-good adapter | G1 |
+| Q32 | Can a PC complete the LDN join with AP-mode-only injection? | Rerun the TX10LED path on a known-good adapter | G1/B1 |
+| Q33 | Can `NGC_services` be launched on a 23.0.1 v1 and register `stpl`/`ngc`? | `pm:shell`/`ns:am2` launch, then `smGetService` | H-GS0, A1 |
+| Q34 | Does a v1-hosted room launch `splay` on a stock guest? | A2/A3 with the OLED | H-GS0 |
+| Q35 | Do `fsp` 830/831 encrypt/decrypt streamplay saves on the guest? | Trigger a save slot and trace `fsp` on the host | H-GS1, dual-stream |
 
 ## Answered
 

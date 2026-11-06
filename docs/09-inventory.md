@@ -9,7 +9,7 @@ Reality check against `05-roadmap.md`. Some of the assumed budget is already cov
 | Raspberry Pi Pico 2 (RP2350) | **Excellent.** USB 1.1 device via TinyUSB, PIO for SD SPI-mode and protocol capture, 150 MHz dual-core, 520 KB SRAM, 4 MB flash. Becomes LAN adapter, GC adapter, wired controller, and slow-bus sniffer. | `usb`, `sdmmc`, `hid` |
 | Seeed XIAO nRF52840 Sense | **Good, one trick only.** NFC-A / ISO14443A tag emulation (amiibo), USB HID, BLE, IMU and PDM mic for motion/audio paths. No BR/EDR, so it cannot be a Pro Controller or Joy-Con. | `nfp`, `usb`, audio/motion edges |
 | Switch OLED (jailed) | **Target, but cannot be imaged.** Mariko, stock, 23.0.1. Right family, wrong risk profile — see 9.4. | Confirmation only |
-| Switch v1 RCM (jailbroken) | **The lab.** CFW, `dmnt`/`twili`, keys, NAND source, golden images, cold reproduction. Same parser builds as Mariko for a given firmware. | All |
+| Switch v1 RCM (jailbroken) | **The lab.** CFW, `dmnt`/`twili`, keys, NAND source, golden images, cold reproduction. Same parser builds as Mariko for a given firmware. Also the GameShare host bring-up platform: 23.0.1 carries `NGC_services` and `splay`. | All, GameShare |
 | macOS / Windows / Ubuntu | Ubuntu is the rig host. macOS is analysis and second opinion. Windows is the second enumeration host for USB differential work. | `usb` differential |
 | Miyoo Mini Plus (OnionOS) | **Delivery AP, not a fuzzing radio.** Linux, `hostapd`/`dnsmasq`/nginx, pocketable, battery powered. Realtek SDIO part: weak monitor mode, no reliable injection. | WebKit delivery, AP setup |
 | AI API credits | Triage and harness generation. Allocation in 9.6. | `04-methods` §4.5 |

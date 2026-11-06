@@ -1,4 +1,4 @@
-# Dossier — GameShare / `splay`, PC-hosted receiver surface
+# Dossier — GameShare / `splay`, host-side receiver surface
 
 Tier C on score, reserve on strategy. The only no-content, host-driven entry in the matrix.
 
@@ -10,11 +10,15 @@ A Switch 2 runs the game and streams a per-guest view to a receiver. The receive
 
 That is interesting for one reason only: **the host is the attacker, and the host can eventually be a PC.**
 
-If a PC can advertise the room, complete the join, and speak `stpl`, then GameShare becomes a one-target, offline-fuzzable parser that needs no game, no save, no modchip and no second console in the loop. The Switch 2 becomes a capture and confirmation device, not a permanent dependency.
+First the v1 proves the host role. Then a PC can take it over: advertise the room, complete the join, speak `stpl`. At that point GameShare becomes a one-target, offline-fuzzable parser that needs no game, no save, no modchip and no second console in the loop. The Switch 2 becomes a capture and confirmation device, not a permanent dependency.
 
 The working thesis:
 
 > The `splay` applet parses attacker-supplied session, media, input and possibly save/state data on a stock 23.0.1 Switch 1, and nobody has fuzzed it.
+
+The first target is not the PC. A 23.0.1 Switch 1 already contains the host program (`NGC_services`, title `0100000000000050`) and the guest applet (`splay`, title `0100000000001048`). Both are dormant, not absent. The v1 can be the host before any PC work: prove the host role there, then port it. See `11-gameshare-host-bringup.md`.
+
+Only after that does the PC question matter. If the v1 can host, a PC can be taught to host.
 
 The corollary, which is the actual bet: **resource pressure from the media channel can widen or expose a bug in the save/state channel.** Flooding alone is unlikely to be a bug. Flooding as an allocator and timing lever against a concurrent save write is a real hypothesis.
 
@@ -35,6 +39,11 @@ The corollary, which is the actual bet: **resource pressure from the media chann
 | `NGC_services` exposes content check/mask/match and save-slot read/write | VERIFIED | `NGC_services.json`, `IUserShimScopedObject` commands 450–457 |
 | No public GameShare/`splay` exploit or dedicated research repo | VERIFIED (absence) | GitHub search, issues, CVE trackers |
 | 23.0.0 changed `splay` NPDM and RomFS; 23.0.1 changed only `sdb` | PARTIAL | TX10LED read-only review |
+| `NGC_services` is a system program on 23.0.1 and provides `stpl:u/sys`, `ngc:u/ngct:u` | VERIFIED | `NGC_services.json`, title map |
+| `splay` is `0100000000001048`, new in 22.0.0, and invokes `stpl:sys` | VERIFIED | `process_swipc.py`, `splay.json` |
+| `fsp` has `EncryptStreamPlaySaveData` (830) and `DecryptStreamPlaySaveData` (831) | VERIFIED | `Filesystem_services.json` |
+| `pctl` has StreamPlay free-communication gates; `hid` has Splay connection triggers | VERIFIED | `Parental_Control_services.json`, `HID_services.json` |
+| `ldn` exposes `OpenAccessPoint`, `CreateNetwork`, `SetAdvertiseData`, `EnableActionFrame` | VERIFIED | `LDN_services.json` 200–208, 500 |
 
 No public work means no prior art to copy and no known-negative to inherit. It also means the protocol grammar is undocumented outside Nintendo and the emulator stubs.
 
@@ -42,13 +51,14 @@ No public work means no prior art to copy and no known-negative to inherit. It a
 
 | ID | Hypothesis | If false |
 | --- | --- | --- |
+| H-GS0 | A modded Switch 1 can host the protocol: launch `NGC_services`, register `stpl`, and get `splay` launched on a stock guest | PC work is gated behind a Switch 2 again; park or fall back to a real capture |
 | H-GS1 | The guest applet receives and parses save/state metadata, not only media | The save-flood half dies; media remains |
-| H-GS2 | A PC can satisfy room advertisement and join enough to get `splay` launched on the guest | PC hosting is blocked behind a real Switch 2 indefinitely |
+| H-GS2 | A PC can satisfy room advertisement and join after the v1 proves the protocol | PC hosting is blocked; v1 hosting remains usable |
 | H-GS3 | The stream uses standard codec/container parameters a PC can generate | Need a host-side encoder dump or a Switch 2 proxy |
 | H-GS4 | Guest-count, bitrate, frame-size or audio pressure changes allocator/timing enough to make a save bug reachable | Flood is cosmetic; fuzz the channels independently |
 | H-GS5 | The Switch 1 guest path is a compatibility subset, not a Switch 2-only feature | Only Switch 2 guests are reachable, which is still useful but not the target |
 
-H-GS1 and H-GS2 are the load-bearing ones. Answer them before writing an encoder.
+H-GS0, H-GS1 and H-GS2 are the load-bearing ones. H-GS0 is answered by `11-gameshare-host-bringup.md` before any encoder exists.
 
 ## 4. Surface, ordered by reachability
 
@@ -112,79 +122,83 @@ A win is any of: decoder-ring overflow, save-buffer OOB, `fsp` path/metadata bug
 
 ## 6. Host-role ladder
 
-Each gate is a pass/fail with a concrete observation. Do not build past a failed gate.
+Two ladders. **Phase A (v1 host)** comes first and needs no Switch 2; **Phase B (PC host)** only starts after A3. Full detail is in `11-gameshare-host-bringup.md`; the summary:
 
 | Gate | Pass condition | Why it can fail |
 | --- | --- | --- |
-| G0 — capture | A real local session between a Switch 2 host and the OLED guest is captured end to end | Nothing to replay without it |
-| G1 — room replay | PC advertises the captured room; the OLED shows the room and the accept prompt | `ldn` room crypto or beacon shape |
-| G2 — launch | Guest accepts; `splay` launches and reaches its first network state | Applet launch needs more than a room |
-| G3 — session | PC completes `stpl:sys` setup and memory sizing; applet waits for media | Unknown command order |
-| G4 — media replay | A recorded stream plays on the guest | Container has host-specific state |
-| G5 — synthetic media | PC-generated frames and audio render; save channel accepted | Encoder or save format unknown |
-| G6 — pressure | One-variable mutations produce a reproducible guest fault | No depth |
+| A0 — static map | Every `stpl` command has a named implementation and caller; `splay` launch condition identified | NCA or key access |
+| A1 — services | `stpl:sys`, `stpl:u`, `ngc:u`, `ngct:u` open and answer after launching `NGC_services` | NPDM permissions or a platform gate |
+| A2 — room | The OLED scan list shows the room with the right metadata | `ldn` parameter or crypto mismatch |
+| A3 — launch | Guest accepts; `splay` launches and reaches its first network state | Applet launch needs more than a room |
+| A4 — session | Host drives `stpl:sys` setup; applet waits for media | Unknown command order |
+| A5 — media/save | One frame renders; one save slot commits | Encoder or save format unknown |
 
-G1 is the real feasibility gate. TX10LED already reached association and AID 1 against a console using AP-mode injection, then lost it at `reason_code=8` before the LDN payload. That work is the starting point, not a solved problem: the current adapter (`rtw88_8822bu`) cannot transmit in monitor mode, and hostapd's beacon SSID shape differs from the `MonitorAP` path.
+A3 is the real feasibility gate, not A2. A room that appears and is rejected is a field problem; a room that launches `splay` is a host.
+
+Phase B is the same ladder with the PC as host, renumbered B0–B6. It begins with a capture of the working A3 session and removes the v1 from the loop. TX10LED's `reason_code=8` and monitor-TX work is the starting point for B1, not a solved problem.
 
 ## 7. Dumps and tooling
 
-Dumps are the substitute for a permanent modded Switch 2: the host role is learned offline from system and game binaries, then implemented on a PC. Minimum useful set, in order:
+Phase A needs the v1, not a Switch 2. Minimum useful set, in order:
 
-1. **Switch 2:** `SplayApplet`, `NGC_services`, the `stpl` sysmodule, and one GameShare-compatible game's `main`. The game gives host-side call order and structures; the system programs give the guest grammar.
-2. **Switch 1 23.0.1:** `splay` NPDM and `main`. The program NCA is keygen `0x17` in the current dump and does not decrypt with the held key set.
+1. **Switch 1 23.0.1:** `NGC_services`, `splay`, `ldn`, `lp2p`, `fsp`, `hid`, `pctl`. The v1 can dump all of them; derive `0x17` keys with `Lockpick_RCM` and a current key generator.
+2. **Switch 2, later:** `SplayApplet`, `stpl`, and one GameShare-compatible game's `main`. Only needed for Phase B and for a byte-for-byte room diff.
 3. **Public substitutes:** `borntohonk/Switch-Ghidra-Guides` already maps both applets' service lists, vtables and command stubs. Emulator HLE code documents `stpl:u` command 0, `GetRequiredMemorySize`, `GetWorkBufferSizes` and the `nn::streamplay` surface.
-4. **ns2jb as a dumper:** if a Switch 2 is available, its firmware-dump path can capture accessible system programs and save the reverse-engineering step.
+4. **ns2jb as a dumper:** if a Switch 2 is borrowed, its firmware-dump path captures accessible system programs.
 
-Tooling: Ghidra with the Switch loader, Wireshark with 802.11 support, the TX10LED LDN advertisement code for AES-CTR room parameters, and a packet-level diff harness once G1 passes.
+Tooling: Ghidra with the Switch loader, `twili`/`dmnt` on the v1, Wireshark with 802.11 support, and the TX10LED LDN advertisement code for AES-CTR room parameters.
 
 ## 8. Rig
 
-- One stock Switch 2 and one compatible title. Borrow before buying. `Mario Odyssey`, `51 Worldwide Games`, `Captain Toad`, `Big Brain Academy` and `3D World` are the cheap physical options; digital works too.
-- OLED as guest. GameShare is session-only, so brick risk is low, but the OLED is still the daily driver.
+- **v1 as host.** CFW, 23.0.1, dumped and golden-imaged. It is the only console the host code runs on in Phase A.
+- **OLED as guest.** Stock, 23.0.1. GameShare is session-only, so brick risk is low, but the OLED is still the daily driver.
+- **No Switch 2.** It is borrowed only if A3 fails and a real room diff is needed.
 - Controlled 2.4 GHz channel, quiet air, MAC randomisation off, 90DNS on both consoles so the firmware cannot move.
-- Capturing radio with working monitor-mode TX. The ESP32-S3 is the current injector plan; a known-good Linux adapter is the fallback. AP mode alone gets beacons but not the vendor action frames.
-- Capture on the air only. There is no debug channel on the guest and no `twili` on the OLED.
+- `twili`/`dmnt` trace on the host; air capture for the guest. There is no debug channel on the OLED.
 
 ## 9. Known-unknowns
 
-Tracked as Q26–Q32 in `07-open-questions.md`:
+Tracked as Q26–Q35 in `07-open-questions.md`:
 
+- Whether `NGC_services` can be launched on a v1 and register `stpl`/`ngc`.
 - Whether the guest ever receives save/state data, and through which interface.
 - Whether the stream is a standard container or a Nintendo-private framing.
 - Whether the guest system launches `splay` from room parameters alone.
 - Whether `GetRequiredMemorySize` trusts a host guest count above three.
 - Which `stpl:sys` commands are reachable before a session exists.
 - Whether the Switch 1 guest is a compatibility subset of the Switch 2 protocol.
-- Whether a PC can complete the join with AP-mode-only injection.
+- Whether a PC can complete the join only after the v1 has proved it.
 
 ## 10. First three experiments
 
-1. **Capture one real session.** Switch 2 host, OLED guest, one title, controlled channel. Record every frame from advertisement to teardown; log the exact guest prompts, applet launch time and error codes. Deliverable: a pcap and a timeline.
-2. **Map the guest statically.** Take `splay` NPDM and `main` from 23.0.1, index it against the public IPC dump, and list the `stpl:sys` commands actually called, in order. Deliverable: call table with argument shapes.
-3. **Room replay from a PC.** Replay the captured advertisement and association with the TX10LED machinery, no Switch 2 present. Deliverable: pass/fail on G1, with the first divergence point.
+1. **Static map the v1.** Extract `NGC_services`, `splay` and `ldn`, and list every `stpl` command with its caller and direction. Deliverable: call table and NPDM permissions.
+2. **Probe the services.** `smGetService` all four; launch `NGC_services` by title if absent; trace it. Deliverable: registration result and a startup trace.
+3. **Build the room.** Call `ldn` host APIs with the traced parameters and watch the OLED scan list. Deliverable: pass/fail on A2 and A3, with the first divergence point.
 
-Only experiment 3 needs the injecting radio. Experiments 1 and 2 can start with borrowed hardware and dumps.
+None of these needs a Switch 2 or an injecting radio. Phase B does.
 
 ## 11. What counts as a win
 
 | Tier | Result | Note |
 | --- | --- | --- |
 | T0-adjacent | Applet code execution or controlled write through `splay` | Needs an applet→something pivot to be useful; `fsp-srv` gives save read/write, `ldn` gives radio, `bsd` gives a beacon |
-| T0 | Session-only loader or applet-save editor via GameShare | No cartridge, no save install, host-driven; a PC host can serve a synthetic stream, not a real game |
-| T3 contribution | PC host removes the Switch 2 requirement | Social friction only: be in range and accept |
+| T0 | Session-only loader or applet-save editor via a v1-hosted GameShare session | No cartridge, no save install, host-driven |
+| T3 contribution | PC host removes the v1 as well | Social friction only: be in range and accept |
+
+A3 alone — a v1-hosted room that launches `splay` on a stock guest — is a publishable milestone even with no bug.
 
 It is not a kernel path. Do not score it as one. It is a delivery channel with a parser behind it.
 
 ## 12. Status and kill criteria
 
-**Reserve.** Start only if a tier-A track dies, a Switch 2 is borrowable, or the `fsp` track needs a no-cartridge delivery story.
+**Reserve, but start A0 now.** The v1 removes the hardware dependency; A0/A1 are cheap and static-ish. Begin when a tier-A track is waiting on parts, or immediately if the `fsp` track needs a no-cartridge delivery story.
 
-- **Kill 1:** no G1 after four weeks of radio work → park; the room crypto is the wall.
-- **Kill 2:** six weeks from G1 with no deterministic guest fault → park and publish the negative.
+- **Kill 1:** `NGC_services` will not launch and register after two weeks, and the failure is a hard platform gate → park.
+- **Kill 2:** no `splay` launch after six weeks from A1 → borrow a Switch 2, capture one room, diff; if still nothing, park.
 - **Kill 3:** stream turns out opaque and no PC encoder is feasible → park until a host-side dump exists.
 - **Kill 4:** guest `splay` is a thin passthrough to `nvdrv`/`codec` with no Nintendo-written parsing → rotate to the codec.
 
-Publish the pcap, the room parameters and the command table even on a kill. The next person should not repeat G0.
+Publish the pcap, the room parameters and the command table even on a kill. The next person should not repeat A0 or A3.
 
 ## 13. Legal posture
 

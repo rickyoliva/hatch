@@ -58,6 +58,7 @@ A modchip delivers T2/T3 for roughly £15 and a soldering iron. We are not tryin
 - [docs/08-decisions.md](docs/08-decisions.md) — ADR log
 - [docs/09-inventory.md](docs/09-inventory.md) — actual kit, blocked tracks, gaps
 - [docs/10-v1-prep.md](docs/10-v1-prep.md) — hands-on v1 preparation and safety protocol
+- [docs/11-gameshare-host-bringup.md](docs/11-gameshare-host-bringup.md) — v1-host GameShare bring-up, no Switch 2
 - [shopping_list.md](shopping_list.md) — capability hypotheses, costed, with the reasoning attached
 
 ## Legal posture
