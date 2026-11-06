@@ -63,3 +63,7 @@ A modchip delivers T2/T3 for roughly £15 and a soldering iron. We are not tryin
 ## Legal posture
 
 We work from our own console dumps and our own derived keys. No copyrighted blobs are committed. Toolchain is GPL/MIT and public. Nintendo has never litigated against a published softmod as such; the risk is commercial, not criminal.
+
+## License
+
+Code and prose here are MIT — see [LICENSE](LICENSE). Third-party toolchain keeps its own license. Nintendo's firmware, keys and trademarks are not covered by it.
